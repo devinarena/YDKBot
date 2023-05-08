@@ -1,0 +1,18 @@
+{
+  "name": "ydkbot",
+  "version": "1.0.0",
+  "description": "A discord bot for pulling Yu-Gi-Oh! card data.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "author": "Devin Arena",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.0.3",
+    "node-fetch": "^3.3.1",
+    "nodemon": "^2.0.22"
+  }
+}
