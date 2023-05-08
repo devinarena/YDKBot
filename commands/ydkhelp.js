@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 
-let reply = `**Yu-Gi-Oh! Deck Bot v1.0**\nCreated by Devin Arena`
+let reply = `**Yu-Gi-Oh! Deck Bot v1.0**\nCreated by Devin Arena\n`
 
 reply += "**Commands**\n"
 reply += "*/ydkinfo* - Prints bot information\n"
