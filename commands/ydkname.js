@@ -7,9 +7,9 @@ const idURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?name=";
 module.exports = {
     data: new SlashCommandBuilder().setName('ydkname').setDescription('Grabs a card by name').addStringOption(option => option.setName("name").setDescription("The name of  the card to search for.").setRequired(true)),
     async execute(interaction) {
-        const id = interaction.options.getString('name');
+        const name = interaction.options.getString('name');
 
-        fetch(idURL + id).then(response => {
+        fetch(new URL(idURL + name)).then(response => {
             response.json().then(async json => {
 
                 if (!json || !json.data || json.data.length === 0) {

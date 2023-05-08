@@ -9,7 +9,7 @@ module.exports = {
     async execute(interaction) {
         const id = interaction.options.getNumber('id');
 
-        fetch(idURL + id).then(response => {
+        fetch(new URL(idURL + id)).then(response => {
             response.json().then(async json => {
 
                 if (!json || !json.data || json.data.length === 0) {
