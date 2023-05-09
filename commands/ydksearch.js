@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { generateEmbed } = require("../card_embed_generator");
-const { saveCard, getCardById, getCardByName } = require("../card_cache");
+const { saveCard, getCardById, getCardByName, fuzzySearch } = require("../card_cache");
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const idURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?id=";
@@ -18,16 +18,16 @@ module.exports = {
 
         if (interaction.options.getString('name')) {
             const name = interaction.options.getString('name');
-            url = new URL(nameURL + name);
-            card = await getCardByName(name);
+            url = nameURL + encodeURIComponent(name);
+            card = getCardByName(name);
         } else if (interaction.options.getString('fname')) {
             const fname = interaction.options.getString('fname');
-            url = new URL(fnameURL + fname);
-            // TODO: implement fuzzy searching in the cache
+            url = fnameURL + encodeURIComponent(fname);
+            // TODO: fuzzy search
         } else if (interaction.options.getInteger('id')) {
             const id = interaction.options.getInteger('id');
-            url = new URL(idURL + id);
-            card = await getCardById(id);
+            url = idURL + encodeURIComponent(id);
+            card = getCardById(id);
         } else {
             interaction.reply({ content: "You must specify a name or id to search for!", ephemeral: true });
             return;
@@ -39,24 +39,29 @@ module.exports = {
             return;
         }
 
+
         fetch(url).then(response => {
             response.json().then(async json => {
-
                 if (!json || !json.data || json.data.length === 0) {
                     interaction.reply({ content: "An error occurred while fetching the card. No cards found with that query.", ephemeral: true });
                     return;
                 }
 
+                let cardsToSave = [];
+
                 for (let i = 0; i < json.data.length; i++) {
                     const card = json.data[i];
 
-                    saveCard(card);
+                    cardsToSave.push(card);
 
                     if (i === 0)
                         await interaction.reply({ embeds: [generateEmbed(card)] });
                     else
                         await interaction.followUp({ embeds: [generateEmbed(card)] });
                 }
+
+                for (const card of cardsToSave)
+                    saveCard(card);
             }).catch(err => {
                 interaction.reply({ content: "An error occurred while fetching the card. Check the syntax?", ephemeral: true });
                 console.log(err);

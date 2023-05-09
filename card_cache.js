@@ -36,6 +36,27 @@ const getCardById = (id) => {
     return JSON.parse(cardFile);
 }
 
+const fuzzySearch = (cardName) => {
+    let file = fs.readFileSync(path.join(__dirname, "cards", "card_names.json"));
+
+    if (!file) {
+        console.log("Failed to read card_names.json");
+        return null;
+    }
+
+    const cardNames = JSON.parse(file);
+
+    let results = [];
+
+    for (const name in cardNames) {
+        if (name.includes(cardName)) {
+            results.push(getCardByName(name));
+        }
+    }
+
+    return results;
+}
+
 const saveCard = (cardJson) => {
     fs.readFile(path.join(__dirname, "cards", "card_names.json"), (err, file) => {
         if (!file) {
@@ -62,5 +83,6 @@ const saveCard = (cardJson) => {
 module.exports = {
     saveCard,
     getCardByName,
-    getCardById
+    getCardById,
+    fuzzySearch
 }
