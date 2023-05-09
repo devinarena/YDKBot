@@ -1,29 +1,53 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { generateEmbed } = require("../card_embed_generator");
-const { saveCard, getCardById, getCardByName, fuzzySearch, getCache } = require("../card_cache");
+const { saveCard, getCardById, getCardByName, fuzzySearch, getCache, toInsert, cacheInsert } = require("../card_cache");
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-const idURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?id=";
-const nameURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?name=";
-const fnameURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=";
-const randomURL = "https://db.ygoprodeck.com/api/v7/randomcard.php";
+const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php";
 
-const cache = getCache();
+const idURL = baseURL + "?id=";
+const nameURL = baseURL + "?name=";
+const fnameURL = baseURL + "?fname=";
+const archetypeURL = baseURL + "?archetype=";
+const randomURL = "https://db.ygoprodeck.com/api/v7/randomcard.php";
 
 module.exports = {
     data: new SlashCommandBuilder().setName('ydksearch').setDescription('Grabs a card').
         addStringOption(option => option.setName("name").setDescription("The name of the card to search for.").setAutocomplete(true)).
         addStringOption(option => option.setName("fname").setDescription("Fuzzy search for cards containing this text.").setAutocomplete(true)).
-        addIntegerOption(option => option.setName("id").setDescription("The id of the card to search for.").setAutocomplete(true)).
-        addBooleanOption(option => option.setName("random").setDescription("Get a random card.")),
+        addStringOption(option => option.setName("archetype").setDescription("Search for cards in this archetype.")).
+        addIntegerOption(option => option.setName("id").setDescription("The id of the card to search for.").setAutocomplete(true)),
     async execute(interaction) {
         let url = new URL(idURL);
         let card = null;
 
         if (interaction.options.getString('name')) {
             const name = interaction.options.getString('name');
+            if (name == "random") {
+                fetch(randomURL).then(response => {
+                    response.json().then(async json => {
+                        if (!json) {
+                            interaction.reply({ content: "An error occurred while fetching the card. No cards found with that query.", ephemeral: true });
+                            return;
+                        }
+
+                        const card = json;
+
+                        await interaction.reply({ embeds: [generateEmbed(card)] });
+
+                        saveCard(card);
+                    }).catch(err => {
+                        interaction.reply({ content: "An error occurred while fetching the card. Check the syntax?", ephemeral: true });
+                        console.log(err);
+                    });
+                }).catch(err => {
+                    interaction.reply({ content: "An error occurred while fetching the card. Check the syntax?", ephemeral: true });
+                    console.log(err);
+                });
+                return;
+            }
             url = nameURL + encodeURIComponent(name);
-            card = getCardByName(name);
+            card = await getCardByName(name);
         } else if (interaction.options.getString('fname')) {
             const fname = interaction.options.getString('fname');
             url = fnameURL + encodeURIComponent(fname);
@@ -31,29 +55,10 @@ module.exports = {
         } else if (interaction.options.getInteger('id')) {
             const id = interaction.options.getInteger('id');
             url = idURL + encodeURIComponent(id);
-            card = getCardById(id);
-        } else if (interaction.options.getBoolean("random")) {
-            fetch(randomURL).then(response => {
-                response.json().then(async json => {
-                    if (!json) {
-                        interaction.reply({ content: "An error occurred while fetching the card. No cards found with that query.", ephemeral: true });
-                        return;
-                    }
-
-                    const card = json;
-
-                    await interaction.reply({ embeds: [generateEmbed(card)] });
-
-                    saveCard(card);
-                }).catch(err => {
-                    interaction.reply({ content: "An error occurred while fetching the card. Check the syntax?", ephemeral: true });
-                    console.log(err);
-                });
-            }).catch(err => {
-                interaction.reply({ content: "An error occurred while fetching the card. Check the syntax?", ephemeral: true });
-                console.log(err);
-            });
-            return;
+            card = await getCardById(id);
+        } else if (interaction.options.getString("archetype")) {
+            const archetype = interaction.options.getString("archetype");
+            url = archetypeURL + encodeURIComponent(archetype);
         } else {
             interaction.reply({ content: "You must specify a name or id to search for!", ephemeral: true });
             return;
@@ -73,21 +78,20 @@ module.exports = {
                     return;
                 }
 
-                let cardsToSave = [];
-
                 for (let i = 0; i < json.data.length; i++) {
                     const card = json.data[i];
 
-                    cardsToSave.push(card);
+                    cacheInsert.push(card);
+                }
+
+                for (let i = 0; i < json.data.length; i++) {
+                    const card = json.data[i];
 
                     if (i === 0)
                         await interaction.reply({ embeds: [generateEmbed(card)] });
                     else
                         await interaction.followUp({ embeds: [generateEmbed(card)] });
                 }
-
-                for (const card of cardsToSave)
-                    saveCard(card);
             }).catch(err => {
                 interaction.reply({ content: "An error occurred while fetching the card. Check the syntax?", ephemeral: true });
                 console.log(err);
@@ -101,6 +105,8 @@ module.exports = {
         const name = interaction.options.getString('name');
         const fname = interaction.options.getString('fname');
         const id = interaction.options.getInteger('id');
+
+        const cache = await getCache();
 
         let names = [];
 
