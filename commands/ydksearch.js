@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { generateEmbed } = require("../card_embed_generator");
+const { saveCard, getCardById, getCardByName } = require("../card_cache");
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const idURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?id=";
@@ -13,18 +14,28 @@ module.exports = {
         addIntegerOption(option => option.setName("id").setDescription("The id of the card to search for.")),
     async execute(interaction) {
         let url = new URL(idURL);
+        let card = null;
 
         if (interaction.options.getString('name')) {
             const name = interaction.options.getString('name');
-            url = new URL(nameURL + name)
+            url = new URL(nameURL + name);
+            card = await getCardByName(name);
         } else if (interaction.options.getString('fname')) {
             const fname = interaction.options.getString('fname');
-            url = new URL(fnameURL + fname)
+            url = new URL(fnameURL + fname);
+            // TODO: implement fuzzy searching in the cache
         } else if (interaction.options.getInteger('id')) {
             const id = interaction.options.getInteger('id');
-            url = new URL(idURL + id)
+            url = new URL(idURL + id);
+            card = await getCardById(id);
         } else {
             interaction.reply({ content: "You must specify a name or id to search for!", ephemeral: true });
+            return;
+        }
+
+        if (card) {
+            console.log("Found card in cache");
+            interaction.reply({ embeds: [generateEmbed(card)] });
             return;
         }
 
@@ -38,6 +49,8 @@ module.exports = {
 
                 for (let i = 0; i < json.data.length; i++) {
                     const card = json.data[i];
+
+                    saveCard(card);
 
                     if (i === 0)
                         await interaction.reply({ embeds: [generateEmbed(card)] });
