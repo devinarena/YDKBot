@@ -1,6 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
+const getCache = () => {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, "cards", "card_names.json")));
+}
+
 const getCardByName = (cardName) => {
     let file = fs.readFileSync(path.join(__dirname, "cards", "card_names.json"));
 
@@ -81,6 +85,7 @@ const saveCard = (cardJson) => {
 }
 
 module.exports = {
+    getCache,
     saveCard,
     getCardByName,
     getCardById,

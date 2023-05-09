@@ -32,6 +32,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isAutocomplete()) return;
+
+    const command = client.commands.get(interaction.commandName);
+
+    if (!command) {
+        await interaction.respond({ content: 'There was an error while executing this command!', ephemeral: true });
+        return;
+    }
+
+    try {
+        await command.autocomplete(interaction);
+    } catch (error) {
+        console.error(error);
+        if (interaction.replied || interaction.deferred)
+            await interaction.respond({ content: 'There was an error while executing this command!', ephemeral: true });
+        else
+            await interaction.respond({ content: 'There was an error while executing this command!', ephemeral: true });
+    }
+});
+
 client.commands = new Collection();
 
 const commandsPath = path.join(__dirname, 'commands');
