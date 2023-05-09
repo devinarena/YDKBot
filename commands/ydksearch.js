@@ -39,7 +39,7 @@ module.exports = {
                         interaction.reply({ content: "An error occurred while fetching the card. No cards found with that query.", ephemeral: true });
                         return;
                     }
-                    
+
                     const card = json;
 
                     await interaction.reply({ embeds: [generateEmbed(card)] });
@@ -114,8 +114,6 @@ module.exports = {
             }
         }
 
-        console.log(names);
-
         let filtered;
         if (name) {
             filtered = names.filter(choice => choice.startsWith(name));
@@ -126,8 +124,6 @@ module.exports = {
         } else {
             return;
         }
-
-        console.log(filtered);
 
         await interaction.respond(filtered.map(choice => ({ name: choice, value: choice })));
     }

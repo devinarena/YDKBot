@@ -6,11 +6,36 @@ module.exports = {
     generateEmbed(card) {
         const image_url = card['card_images'][0]['image_url'];
 
-        console.log(tcgPlayerURL.replace("%QUERY%", encodeURIComponent(card["name"])));
 
         const url = new URL(tcgPlayerURL.replace("%QUERY%", encodeURIComponent(card["name"]))).toString();
 
-        const embed = new EmbedBuilder().setColor(0x0099FF).setImage(image_url)
+        let color = "#000000";
+        if ("type" in card) {
+            if (card["type"].includes("Spell"))
+                color = "#117267";
+            else if (card["type"].includes("Trap"))
+                color = "#8E1564";
+            else if (card["type"].includes("Monster")) {
+                if (card["type"].includes("Effect")) {
+                    color = "#873811";
+                } else if (card["type"].includes("Normal")) {
+                    color = "#997943";
+                } else if (card["type"].includes("Fusion")) {
+                    color = "#7C4389";
+                } else if (card["type"].includes("Ritual")) {
+                    color = "#405E96";
+                } else if (card["type"].includes("Synchro")) {
+                    color = "#C4BFBE";
+                } else if (card["type"].includes("XYZ")) {
+                    color = "#181C1E";
+                } else if (card["type"].includes("Link")) {
+                    color = "#1B5277";
+                }
+
+            }
+        }
+
+        const embed = new EmbedBuilder().setColor(color).setImage(image_url)
             .setTitle(card['name']).setURL(url).setDescription(card['desc']);
 
         let addedFields = 0;
