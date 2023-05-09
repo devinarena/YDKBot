@@ -24,4 +24,6 @@ When the bot is further in development, you'll be able to add it to your server.
   - fname - string - search for cards with text matching given text
 
 ## Images
-[git-image/ex_stardust_dragon.png](stardust dragon)
+![five headed dragon](git-image/ex_five_headed_dragon.png)
+![evenly matched](git-image/ex_evenly_matched.png)
+![stardust dragon](git-image/ex_stardust_dragon.png)
