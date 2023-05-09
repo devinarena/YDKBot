@@ -5,8 +5,7 @@ let reply = `**Yu-Gi-Oh! Deck Bot v1.0**\nCreated by Devin Arena\n`
 reply += "**Commands**\n"
 reply += "*/ydkinfo* - Prints bot information\n"
 reply += "*/ydkhelp* - Prints a list of commands\n"
-reply += "*/ydkid* - Grabs a card by ID\n"
-reply += "*/ydkname* - Grabs a card by name\n"
+reply += "*/ydksearch* - Grabs a card\n"
 reply += "*/ydkrandom* - Grabs a random card\n"
 
 module.exports = {
