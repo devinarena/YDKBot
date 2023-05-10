@@ -3,68 +3,24 @@ const path = require('path');
 
 let cache = {};
 let idCache = {};
-const cacheInsert = [];
 
 const getCache = async () => {
-    if (cacheInsert.length > 0) {
-        await dumpCache();
-    }
-
     return cache;
 }
 
 const getIdCache = async () => {
-    if (cacheInsert.length > 0) {
-        await dumpCache();
-    }
-
     return idCache;
 }
 
 const getCardByName = async (cardName) => {
-    if (cacheInsert.length > 0) {
-        await dumpCache();
-    }
-
-    let file = fs.readFileSync(path.join(__dirname, "cards", "card_names.json"));
-
-    if (!file) {
-        console.log("Failed to read card_names.json");
-        return null;
-    }
-
-    const cardNames = JSON.parse(file);
-
-    if (cardName in cardNames) {
-        let cardFile = fs.readFileSync(path.join(__dirname, "cards", cardNames[cardName] + ".json"));
-
-        if (!cardFile) {
-            console.log("Failed to read " + cardNames[cardName] + ".json");
-            return null;
-        }
-
-        return JSON.parse(cardFile);
-    }
-
-    return null;
+    return cache[cardName];
 }
 
 const getCardById = async (id) => {
-    while (cacheInsert.length > 1) continue;
-
-    let cardFile = fs.readFileSync(path.join(__dirname, "cards", id + ".json"));
-
-    if (!cardFile) {
-        console.log("Failed to read " + id + ".json");
-        return null;
-    }
-
-    return JSON.parse(cardFile);
+    return cache[idCache[id]];
 }
 
 const fuzzySearch = async (cardName) => {
-    while (cacheInsert.length > 1) continue;
-
     let file = fs.readFileSync(path.join(__dirname, "cards", "card_names.json"));
 
     if (!file) {
@@ -83,6 +39,11 @@ const fuzzySearch = async (cardName) => {
     }
 
     return results;
+}
+
+const cacheInsert = async (cardJson) => {
+    cache[cardJson.name] = cardJson;
+    idCache[cardJson.id] = cardJson.name;
 }
 
 // const saveCard = (cardJson) => {
@@ -108,33 +69,62 @@ const fuzzySearch = async (cardName) => {
 //     });
 // }
 
+const loadCard = (id) => {
+    let file = fs.readFileSync(path.join(__dirname, "cards", id + ".json"));
+
+    if (!file) {
+        console.log("Failed to read " + id + ".json");
+        return;
+    }
+
+    let cardJson = JSON.parse(file);
+    cache[cardJson.name] = cardJson;
+    idCache[cardJson.id] = cardJson.name;
+}
+
 (async () => {
-    cache = JSON.parse(fs.readFileSync(path.join(__dirname, "cards", "card_names.json")));
-    idCache = JSON.parse(fs.readFileSync(path.join(__dirname, "cards", "card_ids.json")));
+    if (!fs.existsSync(path.join(__dirname, "cards"))) {
+        fs.mkdirSync(path.join(__dirname, "cards"));
+    }
+    if (!fs.existsSync(path.join(__dirname, "cards", "card_names.json"))) {
+        fs.writeFileSync(path.join(__dirname, "cards", "card_names.json"), "{}");
+    }
+    let file = fs.readFileSync(path.join(__dirname, "cards", "card_names.json"));
+    let nameCache = JSON.parse(file);
+    for (const cardName in nameCache) {
+        loadCard(nameCache[cardName]);
+    }
 })();
 
 const dumpCache = async () => {
-    while (cacheInsert.length > 0) {
-        console.log("Inserting " + cacheInsert.length + " cards");
+    let updated = false;
 
-        let cardJson = cacheInsert.pop();
-
-        cache[cardJson["name"]] = cardJson["id"]
-        idCache[cardJson["id"]] = cardJson["name"]
-
-        await fs.writeFile(path.join(__dirname, "cards", cardJson.id + ".json"), JSON.stringify(cardJson), () => {
-            console.log("Updated " + cardJson.id + ".json")
-        });
+    for (const cardName in cache) {
+        if (!fs.existsSync(path.join(__dirname, "cards", cache[cardName].id + ".json"))) {
+            await fs.writeFile(path.join(__dirname, "cards", cache[cardName].id + ".json"), JSON.stringify(cache[cardName]), () => {
+                console.log("Updated " + cache[cardName].id + ".json")
+            });
+            updated = true;
+        }
     }
 
-    await fs.writeFile(path.join(__dirname, "cards", "card_names.json"), JSON.stringify(cache), () => {
+    if (!updated)
+        return;
+
+
+    let nameIdMap = {};
+    for (const cardName in cache) {
+        nameIdMap[cardName] = cache[cardName].id;
+    }
+
+    await fs.writeFile(path.join(__dirname, "cards", "card_names.json"), JSON.stringify(nameIdMap), () => {
         console.log("Updated card_names.json");
     });
-
-    await fs.writeFile(path.join(__dirname, "cards", "card_ids.json"), JSON.stringify(idCache), () => {
-        console.log("Updated card_ids.json");
-    });
 }
+
+// Dump the cache to files every hour
+let cacheInterval = setInterval(dumpCache, 1000 * 30);
+
 
 module.exports = {
     cacheInsert,
@@ -143,5 +133,7 @@ module.exports = {
     // saveCard,
     getCardByName,
     getCardById,
-    fuzzySearch
+    fuzzySearch,
+    dumpCache,
+    cacheInterval
 }

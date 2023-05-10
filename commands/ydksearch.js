@@ -81,7 +81,7 @@ module.exports = {
                 for (let i = 0; i < json.data.length; i++) {
                     const card = json.data[i];
 
-                    cacheInsert.push(card);
+                    cacheInsert(card);
                 }
 
                 for (let i = 0; i < json.data.length; i++) {

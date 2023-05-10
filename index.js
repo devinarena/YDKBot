@@ -4,6 +4,8 @@ require('dotenv').config();
 const { REST, Routes, Client, Events, GatewayIntentBits, Collection } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
+const { dumpCache, cacheInterval } = require('./card_cache');
+const { exit } = require('process');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
@@ -70,3 +72,30 @@ for (const file of commandFiles) {
 }
 
 client.login(process.env.DISCORD_TOKEN);
+
+// Dump the cache to files on exit
+process.on('exit', async () => {
+    await dumpCache();
+    console.log("Exiting...");
+    clearInterval(cacheInterval);
+    exit(0);
+});
+process.on('SIGINT', async () => {
+    await dumpCache();
+    console.log("Exiting...");
+    exit(1);
+});
+// process.on('SIGUSR1', () => {
+//     exit(1);
+// });
+// process.on('SIGUSR2', () => {
+//     exit(1);
+// });
+process.on('uncaughtException', async () => {
+    await dumpCache();
+    console.log("Exiting...");
+    exit(1);
+});
+// process.on('SIGTERM', () => {
+//     exit(1);
+// });
