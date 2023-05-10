@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { generateEmbed } = require("../card_embed_generator");
+const { generateCardEmbed: generateEmbed } = require("../card_embed_generator");
 const { saveCard, getCardById, getCardByName, fuzzySearch, getCache, toInsert, cacheInsert } = require("../card_cache");
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 

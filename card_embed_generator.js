@@ -3,7 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 const tcgPlayerURL = "https://www.tcgplayer.com/search/yugioh/product?productLineName=yugioh&q=%QUERY%&view=grid";
 
 module.exports = {
-    generateEmbed(card) {
+    generateCardEmbed(card) {
         const image_url = card['card_images'][0]['image_url'];
 
 
