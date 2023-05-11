@@ -21,7 +21,7 @@ const getCardName = async (id) => {
 
     const card = json.data[0];
 
-    cacheInsert.push(card);
+    cacheInsert(card);
 
     return card.name;
 }
@@ -71,6 +71,18 @@ module.exports = {
             delete mainMap[id];
         }
 
+        for (const id in extraMap) {
+            const name = await getCardName(id);
+            extraMap[name] = extraMap[id];
+            delete extraMap[id];
+        }
+
+        for (const id in sideMap) {
+            const name = await getCardName(id);
+            sideMap[name] = sideMap[id];
+            delete sideMap[id];
+        }
+
         let main = "";
         let extra = "";
         let side = "";
@@ -80,7 +92,7 @@ module.exports = {
         let sideCounter = 1;
 
         for (const name in mainMap) {
-            const str = name + ": " + mainMap[name] + "\n";
+            const str = name + " x " + mainMap[name] + "\n";
             if (main.length + str.length > 1024) {
                 embed.addFields({ name: "Main (" + mainCounter + ")", value: main });
                 mainCounter++;
@@ -89,7 +101,7 @@ module.exports = {
             main += str;
         }
         for (const name in extraMap) {
-            const str = name + ": " + extraMap[name] + "\n";
+            const str = name + " x " + extraMap[name] + "\n";
             if (extra.length + str.length > 1024) {
                 embed.addFields({ name: "Extra (" + extraCounter + ")", value: extra });
                 extraCounter++;
@@ -98,7 +110,7 @@ module.exports = {
             extra += str;
         }
         for (const name in sideMap) {
-            const str = name + ": " + sideMap[name] + "\n";
+            const str = name + " x " + sideMap[name] + "\n";
             if (side.length + str.length > 1024) {
                 embed.addFields({ name: "Side (" + sideCounter + ")", value: side });
                 sideCounter++;
